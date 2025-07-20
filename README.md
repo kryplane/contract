@@ -1,12 +1,35 @@
-# 🕶️ ShadowChat Protocol
+# 🕶️ ShadowChat Protocol - Monorepo
 
 **Privacy-Preserving Messaging System on Blockchain with On-Chain Storage**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.20-blue.svg)](https://soliditylang.org/)
 [![Hardhat](https://img.shields.io/badge/Built%20with-Hardhat-yellow.svg)](https://hardhat.org/)
+[![React](https://img.shields.io/badge/React-18.2-blue.svg)](https://reactjs.org/)
 
-## 🌟 Overview
+## �️ Monorepo Structure
+
+This repository contains both the smart contracts and frontend application for the ShadowChat Protocol:
+
+```
+shadowchat-protocol/
+├── packages/
+│   ├── contracts/          # Smart contracts (Solidity + Hardhat)
+│   │   ├── contracts/      # Solidity smart contracts
+│   │   ├── scripts/        # Deployment and interaction scripts
+│   │   ├── test/          # Contract tests
+│   │   └── hardhat.config.js
+│   │
+│   └── frontend/          # Frontend dApp (React + TypeScript)
+│       ├── src/           # React application source
+│       ├── public/        # Static assets
+│       └── vite.config.ts # Vite configuration
+│
+├── package.json           # Root workspace configuration
+└── README.md
+```
+
+## �🌟 Overview
 
 ShadowChat Protocol enables **anonymous messaging on blockchain** where users can send and receive encrypted messages without revealing their identities. The system stores encrypted message content directly on-chain and uses advanced cryptographic techniques for privacy.
 
@@ -15,6 +38,74 @@ ShadowChat Protocol enables **anonymous messaging on blockchain** where users ca
 - **On-Chain Encrypted Storage**: Message content encrypted and stored directly on blockchain
 - **Credit-Based Anti-Spam**: Prepaid system prevents spam without KYC
 - **Sharded Architecture**: Horizontal scaling for massive user adoption
+- **Modern Web3 UX**: Intuitive React frontend with wallet integration
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Git
+
+### Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd shadowchat-protocol
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start local blockchain**
+   ```bash
+   npm run node
+   ```
+
+4. **Deploy contracts** (in another terminal)
+   ```bash
+   npm run deploy:local
+   ```
+
+5. **Start frontend development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open the application**
+   - Frontend: http://localhost:3000
+   - Hardhat node: http://localhost:8545
+
+### Available Scripts
+
+```bash
+# Development
+npm run dev              # Start frontend development server
+npm run node            # Start local Hardhat blockchain
+
+# Building
+npm run build           # Build all packages
+npm run build:contracts # Compile smart contracts  
+npm run build:frontend  # Build frontend for production
+
+# Testing
+npm run test            # Run all tests
+npm run test:contracts  # Run contract tests only
+
+# Deployment
+npm run deploy:local    # Deploy to local Hardhat network
+npm run deploy:goerli   # Deploy to Goerli testnet
+npm run deploy:mainnet  # Deploy to Ethereum mainnet
+
+# Maintenance
+npm run clean           # Clean contract artifacts
+npm run lint            # Run linters on all packages
+npm run lint:fix        # Fix linting issues
+```
 
 ## 🏗️ Architecture
 

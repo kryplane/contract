@@ -1,25 +1,29 @@
 {
-  "name": "shadowchat-protocol",
+  "name": "shadowchat-protocol-monorepo",
   "version": "1.0.0",
-  "description": "A privacy-preserving, credit-based on-chain messaging system",
-  "main": "index.js",
+  "description": "A privacy-preserving, credit-based on-chain messaging system - Monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "compile": "hardhat compile",
-    "test": "hardhat test",
-    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
-    "deploy:localhost": "hardhat run scripts/deploy.js --network localhost",
-    "deploy:goerli": "hardhat run scripts/deploy-production.js --network goerli",
-    "deploy:mainnet": "hardhat run scripts/deploy-production.js --network mainnet",
-    "interact:local": "hardhat run scripts/interact.js --network localhost",
-    "interact:goerli": "hardhat run scripts/interact.js --network goerli",
-    "monitor:local": "hardhat run scripts/monitor.js --network localhost",
-    "monitor:goerli": "hardhat run scripts/monitor.js --network goerli",
-    "demo": "hardhat run scripts/demo.js --network localhost",
-    "node": "hardhat node",
-    "clean": "hardhat clean",
-    "coverage": "hardhat coverage",
-    "lint": "solhint 'contracts/**/*.sol'",
-    "lint:fix": "solhint 'contracts/**/*.sol' --fix"
+    "dev": "npm run dev --workspace=@shadowchat/frontend",
+    "dev:frontend": "npm run dev --workspace=@shadowchat/frontend",
+    "build": "npm run build --workspaces --if-present",
+    "build:contracts": "npm run compile --workspace=@shadowchat/contracts",
+    "build:frontend": "npm run build --workspace=@shadowchat/frontend",
+    "test": "npm run test --workspaces --if-present",
+    "test:contracts": "npm run test --workspace=@shadowchat/contracts",
+    "compile": "npm run compile --workspace=@shadowchat/contracts",
+    "deploy:local": "npm run deploy:local --workspace=@shadowchat/contracts",
+    "deploy:localhost": "npm run deploy:localhost --workspace=@shadowchat/contracts",
+    "deploy:goerli": "npm run deploy:goerli --workspace=@shadowchat/contracts",
+    "deploy:mainnet": "npm run deploy:mainnet --workspace=@shadowchat/contracts",
+    "node": "npm run node --workspace=@shadowchat/contracts",
+    "clean": "npm run clean --workspace=@shadowchat/contracts",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "postinstall": "npm run build:contracts"
   },
   "keywords": [
     "blockchain",
@@ -27,16 +31,14 @@
     "solidity",
     "messaging",
     "privacy",
-    "decentralized"
+    "decentralized",
+    "dapp",
+    "frontend",
+    "react"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "@openzeppelin/contracts": "^5.0.0",
-    "hardhat": "^2.19.0",
-    "hardhat-gas-reporter": "^1.0.9",
-    "solidity-coverage": "^0.8.5",
-    "solhint": "^4.0.0"
+    "concurrently": "^8.2.2"
   }
 }
