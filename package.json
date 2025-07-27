@@ -1,0 +1,50 @@
+{
+  "name": "shadowchat-protocol",
+  "version": "1.0.0",
+  "description": "A privacy-preserving, credit-based on-chain messaging system",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:localhost": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:goerli": "hardhat run scripts/deploy-production.js --network goerli",
+    "deploy:mainnet": "hardhat run scripts/deploy-production.js --network mainnet",
+    "interact:local": "hardhat run scripts/interact.js --network localhost",
+    "interact:goerli": "hardhat run scripts/interact.js --network goerli",
+    "monitor:local": "hardhat run scripts/monitor.js --network localhost",
+    "monitor:goerli": "hardhat run scripts/monitor.js --network goerli",
+    "demo": "hardhat run scripts/demo.js --network localhost",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "coverage": "hardhat coverage",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint --fix 'contracts/**/*.sol'"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum", 
+    "solidity",
+    "messaging",
+    "privacy",
+    "decentralized"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.3",
+    "@openzeppelin/contracts": "^5.0.1",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "chai": "^4.3.10",
+    "ethers": "^6.9.2",
+    "hardhat": "^2.19.4",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solhint": "^4.1.1",
+    "solidity-coverage": "^0.8.5",
+    "typechain": "^8.3.2"
+  }
+}
