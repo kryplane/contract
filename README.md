@@ -373,7 +373,40 @@ Complete documentation and examples available in:
 
 ## 🔄 Integration Guide
 
-### Frontend Integration
+### 🌐 Frontend Web Application
+
+**ShadowChat now includes a complete React-based web application!**
+
+![ShadowChat Frontend](https://github.com/user-attachments/assets/bf1aeec0-1585-4608-845f-e4a25157803e)
+
+#### Quick Start
+```bash
+# Install dependencies
+npm run setup
+
+# Start local network and deploy contracts
+npm run node
+npm run frontend:demo
+
+# Start frontend application
+npm run frontend:dev
+# Visit: http://localhost:3000
+```
+
+#### Features
+- **🔑 Identity Management**: Generate/import cryptographic identities
+- **💰 Credit Management**: Deposit ETH for message sending
+- **💬 Encrypted Messaging**: Send/receive encrypted messages with real-time updates
+- **📊 Analytics Dashboard**: Monitor activity and network statistics
+- **🔒 Privacy-First UX**: Dark theme optimized for privacy
+
+#### Demo Identities
+- Alice: `alice_secret_demo_key_12345678`
+- Bob: `bob_secret_demo_key_87654321`
+
+**See [FRONTEND_DEMO.md](./FRONTEND_DEMO.md) for complete walkthrough!**
+
+### Backend Integration
 
 1. **Connect to Factory Contract**
    ```javascript
@@ -395,9 +428,8 @@ Complete documentation and examples available in:
    const decrypted = decrypt(encryptedContent, key);
    ```
 
-### Backend Services
+### Recommended Architecture
 
-Recommended backend architecture:
 - **Event Indexer**: Monitor and index all contract events
 - **Message Cache**: Cache encrypted messages for quick retrieval
 - **Notification Service**: Real-time message notifications
@@ -416,9 +448,9 @@ Recommended backend architecture:
 - [x] Production deployment scripts
 - [x] Event monitoring system
 - [x] Complete documentation and demo system
+- [x] **Frontend web application with React + Web3 integration**
 
 ### In Progress 🔄
-- [ ] Frontend web application
 - [ ] Mobile app development
 - [ ] Professional security audit
 - [ ] Testnet deployment and testing
