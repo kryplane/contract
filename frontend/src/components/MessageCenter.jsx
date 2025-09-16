@@ -1,0 +1,381 @@
+import React, { useState, useEffect } from 'react';
+import { Send, RefreshCw, MessageSquare, Lock, Unlock, AlertCircle, Clock, User } from 'lucide-react';
+import { MessageCrypto } from '../utils/crypto.js';
+import toast from 'react-hot-toast';
+
+const MessageCenter = ({ web3Service, userIdentity }) => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [recipientHash, setRecipientHash] = useState('');
+  const [recipientSecret, setRecipientSecret] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  // Load historical messages
+  const loadMessages = async () => {
+    if (!userIdentity || !web3Service) return;
+
+    setIsLoading(true);
+    try {
+      const historicalMessages = await web3Service.getHistoricalMessages(
+        userIdentity.receiverHash
+      );
+      
+      // Decrypt messages
+      const decryptedMessages = historicalMessages.map(msg => ({
+        ...msg,
+        decryptedContent: MessageCrypto.decrypt(msg.encryptedContent, userIdentity.secretCode),
+        timestamp: new Date(parseInt(msg.timestamp) * 1000),
+        isDecrypted: true
+      }));
+
+      setMessages(decryptedMessages);
+      toast.success(`Loaded ${decryptedMessages.length} messages`);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+      toast.error('Failed to load messages');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Start listening for new messages
+  const startListening = async () => {
+    if (!userIdentity || !web3Service || isListening) return;
+
+    try {
+      const unsubscribe = await web3Service.listenForMessages(
+        userIdentity.receiverHash,
+        (newMessage) => {
+          const decryptedMessage = {
+            ...newMessage,
+            decryptedContent: MessageCrypto.decrypt(newMessage.encryptedContent, userIdentity.secretCode),
+            timestamp: new Date(parseInt(newMessage.timestamp) * 1000),
+            isDecrypted: true,
+            isNew: true
+          };
+
+          setMessages(prev => [decryptedMessage, ...prev]);
+          toast.success('New message received!');
+        }
+      );
+
+      setIsListening(true);
+      
+      // Store unsubscribe function for cleanup
+      return unsubscribe;
+    } catch (error) {
+      console.error('Failed to start listening:', error);
+      toast.error('Failed to start listening for messages');
+    }
+  };
+
+  // Generate recipient hash from secret
+  const generateRecipientHash = () => {
+    if (!recipientSecret.trim()) {
+      toast.error('Please enter recipient secret code');
+      return;
+    }
+
+    try {
+      const hash = web3Service.generateReceiverHash(recipientSecret);
+      setRecipientHash(hash);
+      toast.success('Recipient hash generated');
+    } catch (error) {
+      console.error('Failed to generate hash:', error);
+      toast.error('Failed to generate recipient hash');
+    }
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if (!newMessage.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+
+    if (!recipientHash) {
+      toast.error('Please enter recipient hash or secret');
+      return;
+    }
+
+    if (!recipientSecret) {
+      toast.error('Recipient secret is required for encryption');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Encrypt message with recipient's secret
+      const encryptedContent = MessageCrypto.encrypt(newMessage, recipientSecret);
+      
+      // Send to blockchain
+      const tx = await web3Service.sendMessage(recipientHash, encryptedContent);
+      
+      toast.success('Message sent successfully!');
+      setNewMessage('');
+      
+      // Add to local messages list for immediate feedback
+      const sentMessage = {
+        messageId: 'pending',
+        sender: await web3Service.getWalletAddress(),
+        receiverHash,
+        encryptedContent,
+        decryptedContent: newMessage,
+        timestamp: new Date(),
+        isDecrypted: true,
+        isSent: true,
+        transactionHash: tx.transactionHash
+      };
+
+      setMessages(prev => [sentMessage, ...prev]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast.error(error.message || 'Failed to send message');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Load messages when component mounts
+  useEffect(() => {
+    loadMessages();
+    const unsubscribe = startListening();
+    
+    // Cleanup listener on unmount
+    return () => {
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [userIdentity, web3Service]);
+
+  const formatAddress = (address) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleString();
+  };
+
+  if (!userIdentity) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="shadow-card text-center">
+          <AlertCircle className="mx-auto text-yellow-400 mb-4" size={48} />
+          <h3 className="text-xl font-semibold mb-2">No Identity Found</h3>
+          <p className="text-shadow-300">
+            Please create or import an identity first to send and receive messages.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold mb-4">💬 Message Center</h2>
+        <p className="text-shadow-300 max-w-2xl mx-auto">
+          Send and receive encrypted messages on the blockchain. All messages are encrypted 
+          client-side and can only be decrypted by the intended recipient.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Send Message */}
+        <div className="shadow-card">
+          <div className="flex items-center space-x-2 mb-4">
+            <Send className="text-blue-400" size={24} />
+            <h3 className="text-xl font-semibold">Send Message</h3>
+          </div>
+
+          <div className="space-y-4">
+            {/* Recipient */}
+            <div>
+              <label className="block text-sm font-medium text-shadow-300 mb-2">
+                Recipient Secret Code (for encryption)
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={recipientSecret}
+                  onChange={(e) => setRecipientSecret(e.target.value)}
+                  placeholder="Enter recipient's secret code..."
+                  className="shadow-input flex-1"
+                />
+                <button
+                  onClick={generateRecipientHash}
+                  className="shadow-button px-3"
+                  title="Generate hash from secret"
+                >
+                  <Lock size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Recipient Hash */}
+            <div>
+              <label className="block text-sm font-medium text-shadow-300 mb-2">
+                Recipient Hash
+              </label>
+              <input
+                type="text"
+                value={recipientHash}
+                onChange={(e) => setRecipientHash(e.target.value)}
+                placeholder="0x... or use secret code above"
+                className="shadow-input w-full font-mono text-sm"
+              />
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className="block text-sm font-medium text-shadow-300 mb-2">
+                Message
+              </label>
+              <textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your encrypted message here..."
+                rows={4}
+                className="shadow-input w-full resize-none"
+              />
+            </div>
+
+            <button
+              onClick={sendMessage}
+              disabled={isSending || !newMessage || !recipientHash}
+              className="shadow-button-primary w-full flex items-center justify-center space-x-2"
+            >
+              <Send size={16} />
+              <span>{isSending ? 'Sending...' : 'Send Encrypted Message'}</span>
+            </button>
+          </div>
+
+          {/* Send Status */}
+          <div className="mt-4 p-3 bg-green-900/20 border border-green-600/50 rounded-lg">
+            <div className="text-sm text-green-200">
+              <Lock className="inline mr-1" size={14} />
+              Messages are encrypted with the recipient's secret code before sending
+            </div>
+          </div>
+        </div>
+
+        {/* Received Messages */}
+        <div className="shadow-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <MessageSquare className="text-green-400" size={24} />
+              <h3 className="text-xl font-semibold">Received Messages</h3>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+              <span className="text-xs text-shadow-400">
+                {isListening ? 'Listening' : 'Not listening'}
+              </span>
+              <button
+                onClick={loadMessages}
+                disabled={isLoading}
+                className="shadow-button p-2"
+                title="Refresh messages"
+              >
+                <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {messages.length === 0 ? (
+              <div className="text-center py-8 text-shadow-400">
+                <MessageSquare size={48} className="mx-auto mb-2 opacity-50" />
+                <p>No messages yet</p>
+                <p className="text-xs">Messages will appear here when received</p>
+              </div>
+            ) : (
+              messages.map((message, index) => (
+                <div
+                  key={`${message.messageId}-${index}`}
+                  className={`p-4 rounded-lg border ${
+                    message.isNew 
+                      ? 'bg-blue-900/20 border-blue-600/50' 
+                      : message.isSent
+                        ? 'bg-green-900/20 border-green-600/50'
+                        : 'bg-shadow-700 border-shadow-600'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <User size={16} className="text-shadow-400" />
+                      <span className="font-mono text-shadow-300">
+                        {message.isSent ? 'You' : formatAddress(message.sender)}
+                      </span>
+                      {message.isSent && (
+                        <span className="text-green-400 text-xs">Sent</span>
+                      )}
+                      {message.isNew && (
+                        <span className="text-blue-400 text-xs">New</span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs text-shadow-400">
+                      <Clock size={12} />
+                      <span>{formatTime(message.timestamp)}</span>
+                    </div>
+                  </div>
+
+                  <div className="mb-2">
+                    {message.isDecrypted ? (
+                      <div className="flex items-start space-x-2">
+                        <Unlock size={16} className="text-green-400 mt-1 flex-shrink-0" />
+                        <p className="text-shadow-50">{message.decryptedContent}</p>
+                      </div>
+                    ) : (
+                      <div className="flex items-start space-x-2">
+                        <Lock size={16} className="text-red-400 mt-1 flex-shrink-0" />
+                        <p className="text-shadow-400 font-mono text-sm break-all">
+                          {message.encryptedContent.substring(0, 100)}...
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {message.transactionHash && (
+                    <div className="text-xs text-shadow-400 font-mono">
+                      TX: {formatAddress(message.transactionHash)}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Your Identity Info */}
+      <div className="shadow-card bg-purple-900/20 border-purple-600/50">
+        <h4 className="font-semibold text-purple-400 mb-3">Your Messaging Identity</h4>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-purple-300 mb-1">
+              Your Receiver Hash (Share this with others)
+            </label>
+            <input
+              type="text"
+              value={userIdentity.receiverHash}
+              readOnly
+              className="shadow-input w-full font-mono text-sm"
+            />
+          </div>
+          <div className="text-sm text-purple-200 space-y-1">
+            <p>• Share your receiver hash so others can send you messages</p>
+            <p>• Keep your secret code private - it's needed to decrypt messages</p>
+            <p>• All messages are encrypted end-to-end</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MessageCenter;

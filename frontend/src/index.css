@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-shadow-900 text-shadow-50;
+  }
+}
+
+@layer components {
+  .shadow-button {
+    @apply bg-shadow-700 hover:bg-shadow-600 text-shadow-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .shadow-button-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .shadow-input {
+    @apply bg-shadow-800 border border-shadow-600 text-shadow-50 placeholder-shadow-400 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+  
+  .shadow-card {
+    @apply bg-shadow-800 border border-shadow-700 rounded-lg p-6;
+  }
+}

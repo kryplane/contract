@@ -33,3 +33,10 @@ coverage/
 # Hardhat
 .hardhat/
 deployments/
+
+# Frontend specific
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
