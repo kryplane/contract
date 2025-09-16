@@ -1,13 +1,35 @@
+/**
+ * ShadowChat Web3 Integration Service
+ * 
+ * This service provides a clean interface for interacting with ShadowChat smart contracts.
+ * It handles wallet connection, contract interactions, and provides user-friendly error handling.
+ * 
+ * Key Features:
+ * - Dynamic contract address configuration via environment variables
+ * - Comprehensive error handling with user-friendly messages
+ * - Credit deposit and withdrawal with proper authorization
+ * - Message sending with balance validation
+ * - Debug logging for development
+ * 
+ * @author ShadowChat Team
+ */
+
 import { ethers } from 'ethers';
 
 // Contract ABIs (simplified versions based on the interface)
+// These ABIs define the functions and events we can interact with
+
+/**
+ * ShadowChat Shard Contract ABI
+ * Contains functions for messaging and credit management
+ */
 export const SHADOWCHAT_ABI = [
-  // Events
+  // Events for listening to contract state changes
   "event MessageSent(uint256 indexed messageId, address indexed sender, bytes32 indexed receiverHash, string encryptedContent, uint256 timestamp)",
   "event CreditDeposited(bytes32 indexed receiverHash, uint256 amount, uint256 totalBalance)",
   "event CreditWithdrawn(bytes32 indexed receiverHash, address withdrawer, uint256 amount, uint256 remainingBalance)",
   
-  // Functions
+  // Core messaging and credit functions
   "function sendMessage(bytes32 receiverHash, string calldata encryptedContent)",
   "function depositCredit(bytes32 receiverHash) payable",
   "function withdrawCredit(bytes32 receiverHash, uint256 amount)",
@@ -18,6 +40,10 @@ export const SHADOWCHAT_ABI = [
   "function totalMessages() view returns (uint256)"
 ];
 
+/**
+ * ShadowChat Factory Contract ABI
+ * Used for shard discovery and configuration
+ */
 export const FACTORY_ABI = [
   "event ShardDeployed(uint256 indexed shardId, address shardAddress)",
   "function getShardForReceiver(bytes32 receiverHash) view returns (address, uint256)",
@@ -27,7 +53,12 @@ export const FACTORY_ABI = [
   "function withdrawalFee() view returns (uint256)"
 ];
 
-// Contract addresses from environment variables with fallbacks
+/**
+ * Get contract addresses from environment variables with fallbacks
+ * This allows for dynamic configuration across different deployments
+ * 
+ * @returns {Object} Contract addresses
+ */
 export const getContractAddresses = () => {
   return {
     factory: import.meta.env.VITE_FACTORY_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3",
@@ -35,7 +66,12 @@ export const getContractAddresses = () => {
   };
 };
 
-// Network configuration from environment
+/**
+ * Get network configuration from environment variables
+ * Supports different networks and debug modes
+ * 
+ * @returns {Object} Network configuration
+ */
 export const getNetworkConfig = () => {
   return {
     chainId: parseInt(import.meta.env.VITE_CHAIN_ID) || 31337,
@@ -44,12 +80,18 @@ export const getNetworkConfig = () => {
   };
 };
 
+/**
+ * Main Web3 Service Class
+ * 
+ * Provides a unified interface for all ShadowChat smart contract interactions.
+ * Handles wallet connection, contract instantiation, and error management.
+ */
 export class Web3Service {
   constructor() {
     this.provider = null;
     this.signer = null;
     this.factoryContract = null;
-    this.contracts = new Map(); // Cache for shard contracts
+    this.contracts = new Map(); // Cache for shard contracts to improve performance
     this.config = getNetworkConfig();
     
     // Log debug information if enabled
@@ -59,6 +101,15 @@ export class Web3Service {
     }
   }
 
+  /**
+   * Connect to user's wallet (MetaMask)
+   * 
+   * Initializes the Web3 provider, requests account access, and sets up
+   * the factory contract connection. Also validates network compatibility.
+   * 
+   * @returns {Promise<boolean>} True if connection successful
+   * @throws {Error} If wallet not available or connection fails
+   */
   async connect() {
     if (typeof window.ethereum !== 'undefined') {
       try {
@@ -94,12 +145,22 @@ export class Web3Service {
     }
   }
 
+  /**
+   * Get the appropriate shard contract for a receiver hash
+   * 
+   * Uses the factory contract to determine which shard handles messages
+   * for a specific receiver hash. Implements caching for performance.
+   * 
+   * @param {string} receiverHash - The keccak256 hash of the secret code
+   * @returns {Promise<Contract>} The shard contract instance
+   * @throws {Error} If factory not initialized or shard not found
+   */
   async getShardContract(receiverHash) {
     if (!this.factoryContract) {
       throw new Error('Factory contract not initialized');
     }
 
-    // Check cache first
+    // Check cache first to avoid unnecessary calls
     const cacheKey = receiverHash.toString();
     if (this.contracts.has(cacheKey)) {
       return this.contracts.get(cacheKey);
@@ -115,17 +176,38 @@ export class Web3Service {
       this.signer
     );
 
-    // Cache it
+    // Cache it for future use
     this.contracts.set(cacheKey, shardContract);
     
     return shardContract;
   }
 
+  /**
+   * Generate a receiver hash from a secret code
+   * 
+   * This creates the pseudonymous identifier used for receiving messages.
+   * The same secret code will always produce the same hash.
+   * 
+   * @param {string} secretCode - The user's secret code
+   * @returns {string} The keccak256 hash as a hex string
+   */
   generateReceiverHash(secretCode) {
     return ethers.keccak256(ethers.toUtf8Bytes(secretCode));
   }
 
+  /**
+   * Deposit credits to a receiver hash
+   * 
+   * Allows anyone to add ETH credits to a receiver hash, enabling message reception.
+   * Includes comprehensive validation and user-friendly error handling.
+   * 
+   * @param {string} receiverHash - The target receiver hash
+   * @param {string|number} amount - Amount in ETH to deposit
+   * @returns {Promise<TransactionReceipt>} Transaction receipt
+   * @throws {Error} For validation failures or transaction errors
+   */
   async depositCredit(receiverHash, amount) {
+    // Input validation
     if (!receiverHash) {
       throw new Error('Receiver hash is required');
     }

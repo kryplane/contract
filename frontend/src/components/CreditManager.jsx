@@ -1,3 +1,27 @@
+/**
+ * CreditManager Component
+ * 
+ * Handles ETH credit deposits and withdrawals for message functionality.
+ * 
+ * Features:
+ * - Display current credit balance and message capacity
+ * - Deposit ETH credits to receiver hash
+ * - Withdraw unused credits with proper authorization
+ * - Real-time balance updates and transaction feedback
+ * 
+ * Credit System:
+ * - Credits stored in smart contract under receiver hash
+ * - Anyone can deposit credits to any receiver hash
+ * - Only secret code holder can withdraw credits
+ * - Message fee deducted from credits when sending messages
+ * 
+ * Security:
+ * - Withdrawal requires two-step process: authorize + withdraw
+ * - Secret code used for withdrawal authorization
+ * - Comprehensive validation and error handling
+ * - User-friendly transaction feedback
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Coins, Plus, Minus, RefreshCw, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';

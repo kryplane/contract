@@ -1,3 +1,27 @@
+/**
+ * IdentityGenerator Component
+ * 
+ * Manages user identity creation and import for ShadowChat.
+ * 
+ * Features:
+ * - Generate new random identity with secure secret code
+ * - Import existing identity from secret code
+ * - Display current identity with privacy controls
+ * - Copy functionality for sharing receiver hash
+ * 
+ * Privacy Design:
+ * - Secret codes are generated client-side only
+ * - Receiver hash derived from secret code using keccak256
+ * - No server communication - completely local
+ * - Users responsible for backing up secret codes
+ * 
+ * Security:
+ * - Secret codes never leave the browser
+ * - Show/hide toggle for secret code visibility
+ * - Minimum 8 character validation for imported codes
+ * - Secure random generation for new identities
+ */
+
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Copy, Eye, EyeOff, Shield, Key } from 'lucide-react';
 import { MessageCrypto } from '../utils/crypto.js';
