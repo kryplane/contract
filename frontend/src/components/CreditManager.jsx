@@ -74,14 +74,37 @@ const CreditManager = ({ web3Service, userIdentity }) => {
       return;
     }
 
+    if (!userIdentity.secretCode) {
+      toast.error('Secret code is required for withdrawal authorization');
+      return;
+    }
+
     setIsWithdrawing(true);
     try {
-      // Note: This is simplified - in reality, you'd need to authorize withdrawal first
-      toast.info('Withdrawal functionality requires additional authorization steps');
-      // const tx = await web3Service.withdrawCredit(userIdentity.receiverHash, withdrawAmount);
-      // toast.success(`Withdrew ${withdrawAmount} ETH successfully!`);
-      // setWithdrawAmount('');
-      // await loadData();
+      // First, authorize the withdrawal using the secret code
+      const walletAddress = await web3Service.getWalletAddress();
+      
+      toast.info('Step 1/2: Authorizing withdrawal...');
+      
+      const authTx = await web3Service.authorizeWithdrawal(
+        userIdentity.receiverHash,
+        walletAddress,
+        userIdentity.secretCode
+      );
+      
+      toast.info('Step 2/2: Processing withdrawal...');
+      
+      // Then perform the actual withdrawal
+      const withdrawTx = await web3Service.withdrawCredit(
+        userIdentity.receiverHash,
+        withdrawAmount
+      );
+      
+      toast.success(`Successfully withdrew ${withdrawAmount} ETH!`);
+      setWithdrawAmount('');
+      
+      // Reload balance to reflect changes
+      await loadData();
     } catch (error) {
       console.error('Withdrawal failed:', error);
       toast.error(error.message || 'Withdrawal failed');
