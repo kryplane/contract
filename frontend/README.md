@@ -152,9 +152,29 @@ The frontend integrates with the ShadowChat Protocol smart contracts:
 
 ### Events Monitored
 
-- `MessageSent`: New message to your receiver hash
-- `CreditDeposited`: Credits added to your balance  
-- `CreditWithdrawn`: Credits withdrawn from your balance
+The frontend implements real-time event listeners for all contract events to provide immediate UI updates without requiring manual refresh:
+
+- **`MessageSent`**: New message to your receiver hash
+  - Automatically displays new messages in MessageCenter
+  - Shows toast notification when messages arrive
+  - Updates message list in real-time
+
+- **`CreditDeposited`**: Credits added to your balance  
+  - Automatically updates credit balance display
+  - Shows toast notification with new balance
+  - Updates message capacity calculation
+
+- **`CreditWithdrawn`**: Credits withdrawn from your balance
+  - Automatically updates remaining balance
+  - Shows toast notification with remaining balance
+  - Updates UI without requiring page refresh
+
+### Real-Time Features
+
+- **Live Status Indicators**: Visual indicators show when event listeners are active
+- **Automatic Updates**: No need to manually refresh balances or message lists
+- **Toast Notifications**: Immediate feedback for all contract activity
+- **Proper Cleanup**: Event listeners are properly cleaned up to prevent memory leaks
 
 ## Development
 

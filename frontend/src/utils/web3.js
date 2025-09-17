@@ -332,6 +332,28 @@ export class Web3Service {
     }
   }
 
+  /**
+   * Listen for new messages sent to a specific receiver hash
+   * 
+   * This method sets up an event listener for MessageSent events filtered by the receiver hash.
+   * When a new message is received, the callback function is invoked with the message details.
+   * 
+   * @param {string} receiverHash - The receiver hash to listen for messages
+   * @param {Function} callback - Function called when a new message is received
+   * @returns {Function} Cleanup function to stop listening and remove event listeners
+   * 
+   * @example
+   * const unsubscribe = await web3Service.listenForMessages(
+   *   userIdentity.receiverHash,
+   *   (message) => {
+   *     console.log('New message:', message);
+   *     // Handle new message (decrypt, display, etc.)
+   *   }
+   * );
+   * 
+   * // Later, cleanup the listener
+   * unsubscribe();
+   */
   async listenForMessages(receiverHash, callback) {
     const shardContract = await this.getShardContract(receiverHash);
     
@@ -352,6 +374,82 @@ export class Web3Service {
 
     return () => {
       shardContract.removeAllListeners(filter);
+    };
+  }
+
+  /**
+   * Listen for credit events (deposits and withdrawals) for a specific receiver hash
+   * 
+   * This method sets up event listeners for both CreditDeposited and CreditWithdrawn events.
+   * It provides real-time updates when credits are added or removed from the receiver hash,
+   * enabling automatic UI updates without manual refresh.
+   * 
+   * @param {string} receiverHash - The receiver hash to listen for credit events
+   * @param {Object} callbacks - Object containing callback functions for different events
+   * @param {Function} [callbacks.onDeposit] - Called when credits are deposited
+   * @param {Function} [callbacks.onWithdraw] - Called when credits are withdrawn
+   * @returns {Function} Cleanup function to stop listening and remove all event listeners
+   * 
+   * @example
+   * const unsubscribe = await web3Service.listenForCreditEvents(
+   *   userIdentity.receiverHash,
+   *   {
+   *     onDeposit: (eventData) => {
+   *       console.log('Credits deposited:', eventData.amount);
+   *       setBalance(eventData.totalBalance);
+   *       toast.success(`New deposit: ${eventData.amount} ETH`);
+   *     },
+   *     onWithdraw: (eventData) => {
+   *       console.log('Credits withdrawn:', eventData.amount);
+   *       setBalance(eventData.remainingBalance);
+   *       toast.success(`Withdrawn: ${eventData.amount} ETH`);
+   *     }
+   *   }
+   * );
+   * 
+   * // Later, cleanup all listeners
+   * unsubscribe();
+   */
+  async listenForCreditEvents(receiverHash, callbacks) {
+    const shardContract = await this.getShardContract(receiverHash);
+    
+    // Create event filters for credit operations
+    const depositFilter = shardContract.filters.CreditDeposited(receiverHash);
+    const withdrawFilter = shardContract.filters.CreditWithdrawn(receiverHash);
+    
+    // Set up CreditDeposited event listener
+    if (callbacks.onDeposit) {
+      shardContract.on(depositFilter, (receiverHash, amount, totalBalance, event) => {
+        callbacks.onDeposit({
+          receiverHash,
+          amount: amount.toString(),
+          totalBalance: totalBalance.toString(),
+          blockNumber: event.blockNumber,
+          transactionHash: event.transactionHash,
+          timestamp: Date.now()
+        });
+      });
+    }
+
+    // Set up CreditWithdrawn event listener
+    if (callbacks.onWithdraw) {
+      shardContract.on(withdrawFilter, (receiverHash, withdrawer, amount, remainingBalance, event) => {
+        callbacks.onWithdraw({
+          receiverHash,
+          withdrawer,
+          amount: amount.toString(),
+          remainingBalance: remainingBalance.toString(),
+          blockNumber: event.blockNumber,
+          transactionHash: event.transactionHash,
+          timestamp: Date.now()
+        });
+      });
+    }
+
+    // Return cleanup function that removes all listeners
+    return () => {
+      shardContract.removeAllListeners(depositFilter);
+      shardContract.removeAllListeners(withdrawFilter);
     };
   }
 
