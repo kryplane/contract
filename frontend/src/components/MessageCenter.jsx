@@ -120,7 +120,7 @@ const MessageCenter = ({ web3Service, userIdentity }) => {
       const sentMessage = {
         messageId: 'pending',
         sender: await web3Service.getWalletAddress(),
-        receiverHash,
+        receiverHash: recipientHash,
         encryptedContent,
         decryptedContent: newMessage,
         timestamp: new Date(),
