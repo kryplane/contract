@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, RefreshCw, MessageSquare, Lock, Unlock, AlertCircle, Clock, User } from 'lucide-react';
 import { MessageCrypto } from '../utils/crypto.js';
+import PrivacyTooltip from './PrivacyTooltip.jsx';
 import toast from 'react-hot-toast';
 
 const MessageCenter = ({ web3Service, userIdentity }) => {
@@ -177,7 +178,24 @@ const MessageCenter = ({ web3Service, userIdentity }) => {
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-4">💬 Message Center</h2>
+        <div className="flex items-center justify-center space-x-3 mb-4">
+          <h2 className="text-3xl font-bold">💬 Message Center</h2>
+          <PrivacyTooltip
+            type="encryption"
+            title="End-to-End Encryption"
+            persistKey="message-encryption"
+          >
+            <div className="space-y-2">
+              <p>Your messages are protected by military-grade encryption:</p>
+              <ul className="space-y-1 text-sm">
+                <li>• AES-256 encryption happens in your browser</li>
+                <li>• Only encrypted data touches the blockchain</li>
+                <li>• Messages can only be read by intended recipients</li>
+                <li>• No plaintext is ever transmitted or stored</li>
+              </ul>
+            </div>
+          </PrivacyTooltip>
+        </div>
         <p className="text-shadow-300 max-w-2xl mx-auto">
           Send and receive encrypted messages on the blockchain. All messages are encrypted 
           client-side and can only be decrypted by the intended recipient.
@@ -190,6 +208,21 @@ const MessageCenter = ({ web3Service, userIdentity }) => {
           <div className="flex items-center space-x-2 mb-4">
             <Send className="text-blue-400" size={24} />
             <h3 className="text-xl font-semibold">Send Message</h3>
+            <PrivacyTooltip
+              type="security"
+              title="Anonymous Messaging"
+              persistKey="send-message-privacy"
+            >
+              <div className="space-y-2">
+                <p>Your messages are sent anonymously:</p>
+                <ul className="space-y-1 text-sm">
+                  <li>• Your wallet address is never linked to messages</li>
+                  <li>• Recipient identity is protected by encryption</li>
+                  <li>• Message content is encrypted before sending</li>
+                  <li>• Only gas fees are visible on-chain</li>
+                </ul>
+              </div>
+            </PrivacyTooltip>
           </div>
 
           <div className="space-y-4">

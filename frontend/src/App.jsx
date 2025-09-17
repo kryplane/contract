@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useWeb3 } from './hooks/useWeb3.js';
 import Header from './components/Header.jsx';
@@ -6,11 +6,27 @@ import IdentityGenerator from './components/IdentityGenerator.jsx';
 import CreditManager from './components/CreditManager.jsx';
 import MessageCenter from './components/MessageCenter.jsx';
 import Analytics from './components/Analytics.jsx';
+import PrivacyOnboarding from './components/PrivacyOnboarding.jsx';
+import PrivacyStatusIndicator from './components/PrivacyStatusIndicator.jsx';
 
 function App() {
   const { web3Service, isConnected, walletAddress, isConnecting, connect, disconnect } = useWeb3();
   const [activeTab, setActiveTab] = useState('identity');
   const [userIdentity, setUserIdentity] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user has seen onboarding before
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('shadowchat-onboarding-seen');
+    if (!hasSeenOnboarding && isConnected) {
+      setShowOnboarding(true);
+    }
+  }, [isConnected]);
+
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('shadowchat-onboarding-seen', 'true');
+  };
 
   const tabs = [
     { id: 'identity', label: '🔑 Identity', component: IdentityGenerator },
@@ -63,6 +79,15 @@ function App() {
           </div>
         ) : (
           <>
+            {/* Privacy Status Indicator */}
+            <div className="mb-6">
+              <PrivacyStatusIndicator
+                userIdentity={userIdentity}
+                isConnected={isConnected}
+                showDetails={false}
+              />
+            </div>
+
             {/* Tab Navigation */}
             <div className="flex space-x-1 mb-8 bg-shadow-800 p-1 rounded-lg">
               {tabs.map(tab => (
@@ -90,6 +115,12 @@ function App() {
             )}
           </>
         )}
+
+        {/* Privacy Onboarding Modal */}
+        <PrivacyOnboarding
+          isVisible={showOnboarding}
+          onClose={handleOnboardingClose}
+        />
       </main>
 
       {/* Footer */}
