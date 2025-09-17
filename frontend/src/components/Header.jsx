@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, X } from 'lucide-react';
+import { Wallet, X, Shield } from 'lucide-react';
 
 const Header = ({ isConnected, walletAddress, isConnecting, onConnect, onDisconnect }) => {
   const formatAddress = (address) => {
@@ -16,7 +16,13 @@ const Header = ({ isConnected, walletAddress, isConnecting, onConnect, onDisconn
             <div className="text-2xl">🕶️</div>
             <div>
               <h1 className="text-xl font-bold text-shadow-50">ShadowChat</h1>
-              <p className="text-xs text-shadow-400">Privacy-preserving messaging</p>
+              <div className="flex items-center space-x-2">
+                <p className="text-xs text-shadow-400">Privacy-preserving messaging</p>
+                <div className="flex items-center space-x-1">
+                  <Shield size={12} className="text-green-400" />
+                  <span className="text-xs text-green-400">Protected</span>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -25,6 +25,8 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Copy, Eye, EyeOff, Shield, Key } from 'lucide-react';
 import { MessageCrypto } from '../utils/crypto.js';
+import PrivacyTooltip from './PrivacyTooltip.jsx';
+import PasswordStrengthIndicator from './PasswordStrengthIndicator.jsx';
 import toast from 'react-hot-toast';
 
 const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
@@ -106,7 +108,33 @@ const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-4">🔑 Identity Management</h2>
+        <div className="flex items-center justify-center space-x-3 mb-4">
+          <h2 className="text-3xl font-bold">🔑 Identity Management</h2>
+          <PrivacyTooltip
+            type="privacy"
+            title="Your Privacy Foundation"
+            persistKey="identity-overview"
+          >
+            <p className="mb-3">
+              Your identity in ShadowChat is completely separate from your wallet address. 
+              This ensures anonymous messaging while maintaining security.
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-start space-x-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
+                <span>Secret codes create pseudonymous identities</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
+                <span>Mathematically impossible to link to your wallet</span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
+                <span>You control your privacy completely</span>
+              </div>
+            </div>
+          </PrivacyTooltip>
+        </div>
         <p className="text-shadow-300 max-w-2xl mx-auto">
           Your identity in ShadowChat consists of a secret code and its corresponding receiver hash. 
           Keep your secret code private - it's used to decrypt messages sent to you.
@@ -119,6 +147,21 @@ const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
           <div className="flex items-center space-x-2 mb-4">
             <Shield className="text-blue-400" size={24} />
             <h3 className="text-xl font-semibold">Generate New Identity</h3>
+            <PrivacyTooltip
+              type="security"
+              title="Secure Identity Generation"
+              persistKey="generate-identity"
+            >
+              <p className="mb-2">
+                ShadowChat generates cryptographically secure identities using:
+              </p>
+              <ul className="space-y-1 text-sm">
+                <li>• Browser's crypto.getRandomValues() for true randomness</li>
+                <li>• 32+ character secret codes for maximum security</li>
+                <li>• Keccak256 hashing for receiver hash derivation</li>
+                <li>• No server communication - completely local</li>
+              </ul>
+            </PrivacyTooltip>
           </div>
           
           <p className="text-shadow-300 mb-6">
@@ -140,6 +183,21 @@ const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
           <div className="flex items-center space-x-2 mb-4">
             <Key className="text-green-400" size={24} />
             <h3 className="text-xl font-semibold">Import Existing Identity</h3>
+            <PrivacyTooltip
+              type="encryption"
+              title="Identity Recovery"
+              persistKey="import-identity"
+            >
+              <p className="mb-2">
+                Your secret code is the only way to recover your identity:
+              </p>
+              <ul className="space-y-1 text-sm">
+                <li>• Secret codes are never stored on servers</li>
+                <li>• Only you have access to your secret code</li>
+                <li>• If lost, your messages cannot be recovered</li>
+                <li>• Always keep secure backups offline</li>
+              </ul>
+            </PrivacyTooltip>
           </div>
           
           <p className="text-shadow-300 mb-4">
@@ -164,6 +222,9 @@ const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
               </button>
             </div>
 
+            {/* Password strength indicator for import field */}
+            <PasswordStrengthIndicator password={secretCode} />
+
             <button
               onClick={useExistingIdentity}
               disabled={!secretCode}
@@ -183,9 +244,26 @@ const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
           <div className="space-y-4">
             {/* Secret Code */}
             <div>
-              <label className="block text-sm font-medium text-shadow-300 mb-2">
-                Secret Code (Keep this private!)
-              </label>
+              <div className="flex items-center space-x-2 mb-2">
+                <label className="block text-sm font-medium text-shadow-300">
+                  Secret Code (Keep this private!)
+                </label>
+                <PrivacyTooltip
+                  type="warning"
+                  title="Critical Privacy Information"
+                  persistKey="secret-code-warning"
+                >
+                  <div className="space-y-2">
+                    <p className="font-semibold text-yellow-300">⚠️ Never share your secret code</p>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Your secret code decrypts all your messages</li>
+                      <li>• Anyone with it can read your messages</li>
+                      <li>• Store it securely offline (password manager, paper)</li>
+                      <li>• Consider it like a private key or password</li>
+                    </ul>
+                  </div>
+                </PrivacyTooltip>
+              </div>
               <div className="flex space-x-2">
                 <input
                   type={showSecret ? 'text' : 'password'}
@@ -215,9 +293,27 @@ const IdentityGenerator = ({ web3Service, userIdentity, setUserIdentity }) => {
 
             {/* Receiver Hash */}
             <div>
-              <label className="block text-sm font-medium text-shadow-300 mb-2">
-                Receiver Hash (Your public address)
-              </label>
+              <div className="flex items-center space-x-2 mb-2">
+                <label className="block text-sm font-medium text-shadow-300">
+                  Receiver Hash (Your public address)
+                </label>
+                <PrivacyTooltip
+                  type="privacy"
+                  title="Anonymous Public Identity"
+                  persistKey="receiver-hash-info"
+                >
+                  <div className="space-y-2">
+                    <p>Your receiver hash is your anonymous public address:</p>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Safe to share publicly</li>
+                      <li>• Mathematically derived from your secret code</li>
+                      <li>• Cannot be linked back to your wallet address</li>
+                      <li>• Others need this to send you messages</li>
+                      <li>• Think of it like an anonymous email address</li>
+                    </ul>
+                  </div>
+                </PrivacyTooltip>
+              </div>
               <div className="flex space-x-2">
                 <input
                   type="text"
