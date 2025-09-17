@@ -62,7 +62,9 @@ const CreditManager = ({ web3Service, userIdentity }) => {
     loadData();
   }, [userIdentity, web3Service]);
 
-  // Set up real-time credit event listening
+  // Set up real-time credit event listening for automatic balance updates
+  // This effect runs when userIdentity or web3Service changes and sets up event listeners
+  // for CreditDeposited and CreditWithdrawn events to provide real-time UI updates
   useEffect(() => {
     if (!userIdentity || !web3Service || isListening) return;
 
@@ -70,16 +72,21 @@ const CreditManager = ({ web3Service, userIdentity }) => {
 
     const startListening = async () => {
       try {
+        // Subscribe to both deposit and withdrawal events for this receiver hash
         unsubscribe = await web3Service.listenForCreditEvents(
           userIdentity.receiverHash,
           {
+            // Handle credit deposit events - automatically update balance and show notification
             onDeposit: (eventData) => {
               console.log('🪙 Credit deposited:', eventData);
+              // Update balance immediately without needing to refresh
               setBalance(eventData.totalBalance);
               toast.success(`Credits deposited! New balance: ${eventData.totalBalance} ETH`);
             },
+            // Handle credit withdrawal events - automatically update balance and show notification
             onWithdraw: (eventData) => {
               console.log('💰 Credit withdrawn:', eventData);
+              // Update balance immediately without needing to refresh
               setBalance(eventData.remainingBalance);
               toast.success(`Credits withdrawn! Remaining balance: ${eventData.remainingBalance} ETH`);
             }
@@ -94,7 +101,7 @@ const CreditManager = ({ web3Service, userIdentity }) => {
 
     startListening();
 
-    // Cleanup function
+    // Cleanup function to prevent memory leaks - removes all event listeners
     return () => {
       if (unsubscribe) {
         unsubscribe();
