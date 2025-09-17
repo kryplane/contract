@@ -26,6 +26,12 @@ export const useWeb3 = () => {
     }
   }, [web3Service, isConnecting]);
 
+  const connectDemo = useCallback(() => {
+    setIsConnected(true);
+    setWalletAddress('0x742d35Cc6634C0532925a3b8D9C9C9C9CC5DC7');
+    toast.success('Demo mode activated!');
+  }, []);
+
   const disconnect = useCallback(() => {
     setIsConnected(false);
     setWalletAddress('');
@@ -76,6 +82,7 @@ export const useWeb3 = () => {
     walletAddress,
     isConnecting,
     connect,
+    connectDemo,
     disconnect
   };
 };
