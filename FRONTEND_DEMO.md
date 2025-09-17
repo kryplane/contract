@@ -1,5 +1,7 @@
 # 🕶️ ShadowChat Frontend - Quick Start Guide
 
+> 📸 **Visual Walkthrough**: For step-by-step screenshots of the complete application workflow, see [App Workflow Screenshots](docs/APP_WORKFLOW_SCREENSHOTS.md)
+
 ## Demo Walkthrough
 
 Follow these steps to test the complete ShadowChat frontend application:

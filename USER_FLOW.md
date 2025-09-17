@@ -2,6 +2,8 @@
 
 This document showcases the complete user flow through the ShadowChat frontend application, demonstrating all key features and workflows.
 
+> 📸 **NEW**: For detailed visual walkthrough with step-by-step screenshots, see [App Workflow Screenshots](docs/APP_WORKFLOW_SCREENSHOTS.md)
+
 ## 📱 User Interface Overview
 
 ![ShadowChat Welcome Screen](https://github.com/user-attachments/assets/dc4f98e8-af1d-4758-9a40-843fc40a7651)
