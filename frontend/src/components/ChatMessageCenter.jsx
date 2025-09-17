@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, RefreshCw, MessageSquare, Lock, Unlock, AlertCircle, Clock, User, Smile, Paperclip, MoreVertical, Search, Phone, Video } from 'lucide-react';
+import { Send, RefreshCw, MessageSquare, Lock, Unlock, AlertCircle, Clock, User, Smile, Paperclip, MoreVertical, Search, Phone, Video, Menu } from 'lucide-react';
 import { MessageCrypto } from '../utils/crypto.js';
 import PrivacyTooltip from './PrivacyTooltip.jsx';
 import toast from 'react-hot-toast';
@@ -12,6 +12,7 @@ const ChatMessageCenter = ({ web3Service, userIdentity }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -177,9 +178,21 @@ const ChatMessageCenter = ({ web3Service, userIdentity }) => {
   }
 
   return (
-    <div className="h-full flex bg-shadow-900">
+    <div className="h-full flex bg-shadow-900 relative">
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Chat List */}
-      <div className="w-80 bg-shadow-800 border-r border-shadow-700 flex flex-col">
+      <div className={`
+        w-80 bg-shadow-800 border-r border-shadow-700 flex flex-col
+        lg:relative lg:translate-x-0
+        ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-20 translate-x-0' : 'hidden lg:flex'}
+      `}>
         {/* Sidebar Header */}
         <div className="p-4 border-b border-shadow-700">
           <div className="flex items-center justify-between">
@@ -199,7 +212,7 @@ const ChatMessageCenter = ({ web3Service, userIdentity }) => {
                   </ul>
                 </div>
               </PrivacyTooltip>
-              <button className="p-2 hover:bg-shadow-700 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-shadow-700 rounded-lg transition-colors lg:hidden">
                 <MoreVertical size={20} className="text-shadow-400" />
               </button>
             </div>
@@ -211,7 +224,7 @@ const ChatMessageCenter = ({ web3Service, userIdentity }) => {
             <input
               type="text"
               placeholder="Search conversations..."
-              className="w-full pl-10 pr-4 py-2 bg-shadow-700 border border-shadow-600 rounded-lg text-shadow-50 placeholder-shadow-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 bg-shadow-700 border border-shadow-600 rounded-lg text-shadow-50 placeholder-shadow-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
         </div>
@@ -285,6 +298,14 @@ const ChatMessageCenter = ({ web3Service, userIdentity }) => {
         <div className="p-4 bg-shadow-800 border-b border-shadow-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="p-2 hover:bg-shadow-700 rounded-lg transition-colors lg:hidden"
+              >
+                <Menu size={20} className="text-shadow-400" />
+              </button>
+              
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <User size={16} className="text-white" />
               </div>
