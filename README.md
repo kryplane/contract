@@ -367,7 +367,9 @@ npx hardhat run scripts/deploy-production.js --network mainnet
 ## 🌍 Documentation
 
 Complete documentation and examples available in:
+- 📸 **[App Workflow Screenshots](docs/APP_WORKFLOW_SCREENSHOTS.md)** - Complete visual walkthrough of the application
 - `scripts/demo.js` - Comprehensive interactive demo
+- `USER_FLOW.md` - Detailed user flow documentation
 - Detailed comments throughout codebase
 - Comprehensive README with usage examples
 
