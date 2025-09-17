@@ -4,6 +4,7 @@ This directory contains comprehensive screenshots demonstrating the complete Sha
 
 ## 📁 Screenshots Included
 
+### Original Interface (Steps 1-7)
 1. **01-welcome-screen.png** - Initial welcome page with wallet connection prompt
 2. **02-connected-identity-tab.png** - Connected state showing identity management interface
 3. **03-identity-generated.png** - Generated identity with secret code and receiver hash
@@ -13,10 +14,18 @@ This directory contains comprehensive screenshots demonstrating the complete Sha
 7. **07-analytics-tab.png** - Analytics dashboard showing activity metrics
 8. **08-welcome-screen-clean.png** - Clean welcome screen reference
 
+### New Telegram/Messenger-Style Interface (Steps 8-12)
+9. **09-welcome-screen-with-demo.png** - Enhanced welcome screen with demo access
+10. **10-telegram-style-chat-interface.png** - Modern chat app-style interface
+11. **11-chat-interface-with-message.png** - Active conversation with message ready to send
+12. **12-mobile-chat-interface.png** - Mobile-responsive chat interface
+13. **13-mobile-sidebar-open.png** - Mobile navigation with sidebar open
+
 ## 📖 Documentation
 
 For detailed explanations of each screenshot and the complete user workflow, see:
 - [App Workflow Screenshots Documentation](../APP_WORKFLOW_SCREENSHOTS.md)
+- [Telegram/Messenger-Style Interface Guide](../TELEGRAM_STYLE_INTERFACE.md)
 - [User Flow Documentation](../../USER_FLOW.md)
 
 ## 🔄 Update Process
