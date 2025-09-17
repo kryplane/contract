@@ -18,6 +18,7 @@
     "monitor:local": "hardhat run scripts/monitor.js --network localhost",
     "monitor:goerli": "hardhat run scripts/monitor.js --network goerli",
     "demo": "hardhat run scripts/demo.js --network localhost",
+    "demo:ipfs": "hardhat run scripts/demo/ipfs-demo.js --network localhost",
     "frontend:demo": "hardhat run scripts/frontend-demo.js --network localhost",
     "node": "hardhat node",
     "clean": "hardhat clean",
@@ -59,5 +60,9 @@
     "solhint": "^4.1.1",
     "solidity-coverage": "^0.8.5",
     "typechain": "^8.3.2"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "form-data": "^4.0.4"
   }
 }
