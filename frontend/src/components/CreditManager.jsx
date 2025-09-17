@@ -34,6 +34,7 @@ const CreditManager = ({ web3Service, userIdentity }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDepositing, setIsDepositing] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   // Load balance and fees
   const loadData = async () => {
@@ -61,6 +62,47 @@ const CreditManager = ({ web3Service, userIdentity }) => {
     loadData();
   }, [userIdentity, web3Service]);
 
+  // Set up real-time credit event listening
+  useEffect(() => {
+    if (!userIdentity || !web3Service || isListening) return;
+
+    let unsubscribe;
+
+    const startListening = async () => {
+      try {
+        unsubscribe = await web3Service.listenForCreditEvents(
+          userIdentity.receiverHash,
+          {
+            onDeposit: (eventData) => {
+              console.log('🪙 Credit deposited:', eventData);
+              setBalance(eventData.totalBalance);
+              toast.success(`Credits deposited! New balance: ${eventData.totalBalance} ETH`);
+            },
+            onWithdraw: (eventData) => {
+              console.log('💰 Credit withdrawn:', eventData);
+              setBalance(eventData.remainingBalance);
+              toast.success(`Credits withdrawn! Remaining balance: ${eventData.remainingBalance} ETH`);
+            }
+          }
+        );
+        setIsListening(true);
+      } catch (error) {
+        console.error('Failed to start credit event listening:', error);
+        toast.error('Failed to start real-time balance updates');
+      }
+    };
+
+    startListening();
+
+    // Cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+        setIsListening(false);
+      }
+    };
+  }, [userIdentity, web3Service, isListening]);
+
   const handleDeposit = async () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
       toast.error('Please enter a valid deposit amount');
@@ -74,11 +116,10 @@ const CreditManager = ({ web3Service, userIdentity }) => {
         depositAmount
       );
       
-      toast.success(`Deposited ${depositAmount} ETH successfully!`);
+      toast.success(`Deposit transaction submitted! ${depositAmount} ETH`);
       setDepositAmount('');
       
-      // Reload balance
-      await loadData();
+      // Balance will be updated automatically via event listener
     } catch (error) {
       console.error('Deposit failed:', error);
       toast.error(error.message || 'Deposit failed');
@@ -124,11 +165,10 @@ const CreditManager = ({ web3Service, userIdentity }) => {
         withdrawAmount
       );
       
-      toast.success(`Successfully withdrew ${withdrawAmount} ETH!`);
+      toast.success(`Withdrawal transaction submitted! ${withdrawAmount} ETH`);
       setWithdrawAmount('');
       
-      // Reload balance to reflect changes
-      await loadData();
+      // Balance will be updated automatically via event listener
     } catch (error) {
       console.error('Withdrawal failed:', error);
       toast.error(error.message || 'Withdrawal failed');
@@ -173,6 +213,15 @@ const CreditManager = ({ web3Service, userIdentity }) => {
           <div className="flex items-center space-x-2">
             <Coins className="text-green-400" size={24} />
             <h3 className="text-xl font-semibold">Current Balance</h3>
+            {/* Real-time status indicator */}
+            <div className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full ${
+              isListening ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isListening ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
+              }`}></div>
+              <span>{isListening ? 'Live Updates' : 'Static'}</span>
+            </div>
           </div>
           <button
             onClick={loadData}

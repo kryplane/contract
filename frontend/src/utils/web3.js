@@ -355,6 +355,52 @@ export class Web3Service {
     };
   }
 
+  /**
+   * Listen for credit events (deposits and withdrawals) for a specific receiver hash
+   * @param {string} receiverHash - The receiver hash to listen for
+   * @param {Object} callbacks - Object containing onDeposit and onWithdraw callback functions
+   * @returns {Function} Cleanup function to stop listening
+   */
+  async listenForCreditEvents(receiverHash, callbacks) {
+    const shardContract = await this.getShardContract(receiverHash);
+    
+    // Listen for CreditDeposited events
+    const depositFilter = shardContract.filters.CreditDeposited(receiverHash);
+    const withdrawFilter = shardContract.filters.CreditWithdrawn(receiverHash);
+    
+    if (callbacks.onDeposit) {
+      shardContract.on(depositFilter, (receiverHash, amount, totalBalance, event) => {
+        callbacks.onDeposit({
+          receiverHash,
+          amount: amount.toString(),
+          totalBalance: totalBalance.toString(),
+          blockNumber: event.blockNumber,
+          transactionHash: event.transactionHash,
+          timestamp: Date.now()
+        });
+      });
+    }
+
+    if (callbacks.onWithdraw) {
+      shardContract.on(withdrawFilter, (receiverHash, withdrawer, amount, remainingBalance, event) => {
+        callbacks.onWithdraw({
+          receiverHash,
+          withdrawer,
+          amount: amount.toString(),
+          remainingBalance: remainingBalance.toString(),
+          blockNumber: event.blockNumber,
+          transactionHash: event.transactionHash,
+          timestamp: Date.now()
+        });
+      });
+    }
+
+    return () => {
+      shardContract.removeAllListeners(depositFilter);
+      shardContract.removeAllListeners(withdrawFilter);
+    };
+  }
+
   async getHistoricalMessages(receiverHash, fromBlock = 0) {
     const shardContract = await this.getShardContract(receiverHash);
     const filter = shardContract.filters.MessageSent(null, null, receiverHash);
