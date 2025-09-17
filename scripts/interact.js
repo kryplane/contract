@@ -1,12 +1,15 @@
 const { ethers } = require("hardhat");
 const fs = require('fs');
 const path = require('path');
+const { IPFSClient } = require('./utils/ipfs');
 
 class ShadowChatClient {
   constructor(factoryAddress, batchAddress, signer) {
     this.factoryAddress = factoryAddress;
     this.batchAddress = batchAddress;
     this.signer = signer;
+    // Initialize IPFS client for off-chain message storage
+    this.ipfs = new IPFSClient();
   }
   
   async init() {
@@ -19,7 +22,12 @@ class ShadowChatClient {
     
     console.log(`🏭 Factory: ${this.factoryAddress}`);
     console.log(`📦 Batch Helper: ${this.batchAddress}`);
-    console.log(`👤 User: ${this.signer.address}\n`);
+    console.log(`👤 User: ${this.signer.address}`);
+    
+    // Show IPFS status
+    const ipfsStatus = this.ipfs.getStatus();
+    console.log(`📡 IPFS Backend: ${ipfsStatus.backend} (${ipfsStatus.configured ? 'Configured' : 'Not Configured'})`);
+    console.log("");
     
     // Load shards
     this.shards = await this.factory.getAllShards();
@@ -56,7 +64,7 @@ class ShadowChatClient {
   }
   
   async sendMessage(receiverHash, messageCid) {
-    console.log(`📨 Gửi tin nhắn:`);
+    console.log(`📨 Gửi tin nhắn với CID có sẵn:`);
     console.log(`   Receiver: ${receiverHash.substring(0, 10)}...`);
     console.log(`   IPFS CID: ${messageCid}`);
     
@@ -95,9 +103,53 @@ class ShadowChatClient {
     
     return tx.hash;
   }
+
+  /**
+   * Send message with automatic IPFS storage
+   * Encrypts content and stores on IPFS, then sends CID to blockchain
+   * @param {string} receiverHash - Target receiver's hash
+   * @param {string} messageContent - Plain message content to encrypt and store
+   * @param {string} encryptionKey - Key for encrypting the message
+   * @returns {Promise<Object>} - Transaction hash and IPFS CID
+   */
+  async sendMessageWithIPFS(receiverHash, messageContent, encryptionKey) {
+    console.log(`📨 Gửi tin nhắn với IPFS integration:`);
+    console.log(`   Receiver: ${receiverHash.substring(0, 10)}...`);
+    console.log(`   Content length: ${messageContent.length} characters`);
+    
+    try {
+      // Encrypt the message content
+      const encryptedContent = await this._encryptMessage(messageContent, encryptionKey);
+      console.log(`🔐 Message encrypted (${encryptedContent.length} characters)`);
+      
+      // Store encrypted content on IPFS
+      const ipfsCid = await this.ipfs.storeMessage(encryptedContent, {
+        sender: this.signer.address,
+        receiverHash: receiverHash,
+        contentLength: messageContent.length
+      });
+      
+      // Send the IPFS CID to blockchain
+      const txHash = await this.sendMessage(receiverHash, ipfsCid);
+      
+      console.log(`🎯 Message sent successfully:`);
+      console.log(`   IPFS CID: ${ipfsCid}`);
+      console.log(`   Transaction: ${txHash}`);
+      
+      return {
+        transactionHash: txHash,
+        ipfsCid: ipfsCid,
+        encryptedContent: encryptedContent
+      };
+      
+    } catch (error) {
+      console.error('❌ Failed to send message with IPFS:', error.message);
+      throw error;
+    }
+  }
   
   async getMessages(receiverHash, fromBlock = 0) {
-    console.log(`📬 Retrie: ${receiverHash.substring(0, 10)}...`);
+    console.log(`📬 Retrieving messages for: ${receiverHash.substring(0, 10)}...`);
     
     const shardAddress = await this.getShardForReceiver(receiverHash);
     const ShadowChat = await ethers.getContractFactory("ShadowChat");
@@ -114,7 +166,7 @@ class ShadowChatClient {
         messageId: event.args.messageId.toString(),
         sender: event.args.sender,
         receiver: event.args.receiver,
-        ipfsCid: event.args.ipfsCid,
+        ipfsCid: event.args.encryptedContent, // This might be a CID or direct content
         timestamp: new Date(Number(event.args.timestamp) * 1000).toISOString(),
         blockNumber: event.blockNumber,
         transactionHash: event.transactionHash
@@ -126,6 +178,68 @@ class ShadowChatClient {
       console.log(`   CID: ${message.ipfsCid}`);
       console.log(`   Time: ${message.timestamp}`);
       console.log("");
+    }
+    
+    return messages;
+  }
+
+  /**
+   * Get messages and retrieve content from IPFS
+   * @param {string} receiverHash - Target receiver's hash
+   * @param {string} decryptionKey - Key for decrypting messages
+   * @param {number} fromBlock - Starting block number
+   * @returns {Promise<Array>} - Array of messages with decrypted content
+   */
+  async getMessagesWithIPFS(receiverHash, decryptionKey, fromBlock = 0) {
+    console.log(`📬 Retrieving messages with IPFS content for: ${receiverHash.substring(0, 10)}...`);
+    
+    const messages = await this.getMessages(receiverHash, fromBlock);
+    
+    console.log(`🔍 Processing ${messages.length} messages for IPFS content...`);
+    
+    for (const message of messages) {
+      try {
+        // Check if the content looks like an IPFS CID
+        if (IPFSClient.isValidCID(message.ipfsCid)) {
+          console.log(`📥 Retrieving IPFS content for CID: ${message.ipfsCid}`);
+          
+          // Retrieve content from IPFS
+          const ipfsData = await this.ipfs.retrieveMessage(message.ipfsCid);
+          message.encryptedContent = ipfsData.content;
+          message.ipfsMetadata = {
+            timestamp: ipfsData.timestamp,
+            version: ipfsData.version
+          };
+          
+          // Decrypt the content if decryption key is provided
+          if (decryptionKey) {
+            try {
+              message.decryptedContent = await this._decryptMessage(message.encryptedContent, decryptionKey);
+              console.log(`🔓 Message decrypted successfully`);
+            } catch (decryptError) {
+              console.log(`❌ Failed to decrypt message: ${decryptError.message}`);
+              message.decryptedContent = '[DECRYPTION FAILED]';
+            }
+          }
+          
+          message.isFromIPFS = true;
+        } else {
+          // Content is stored directly on-chain (legacy mode)
+          message.encryptedContent = message.ipfsCid;
+          message.isFromIPFS = false;
+          
+          if (decryptionKey) {
+            try {
+              message.decryptedContent = await this._decryptMessage(message.encryptedContent, decryptionKey);
+            } catch (decryptError) {
+              message.decryptedContent = '[DECRYPTION FAILED]';
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error processing message ${message.messageId}:`, error.message);
+        message.error = error.message;
+      }
     }
     
     return messages;
@@ -179,6 +293,63 @@ class ShadowChatClient {
     console.log(`✅ Withdraw successful! Balance: ${ethers.formatEther(balance)} ETH\n`);
 
     return withdrawTx.hash;
+  }
+
+  /**
+   * Simple encryption using basic crypto operations
+   * In production, use more robust encryption libraries
+   * @private
+   */
+  async _encryptMessage(message, key) {
+    if (!message || !key) {
+      throw new Error('Message and key are required for encryption');
+    }
+    
+    // For demo purposes, using a simple transformation
+    // In production, use proper encryption libraries like crypto-js
+    const crypto = require('crypto');
+    const algorithm = 'aes-256-cbc';
+    const keyHash = crypto.scryptSync(key, 'salt', 32);
+    const iv = crypto.randomBytes(16);
+    
+    const cipher = crypto.createCipheriv(algorithm, keyHash, iv);
+    let encrypted = cipher.update(message, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    // Combine iv and encrypted data
+    return iv.toString('hex') + ':' + encrypted;
+  }
+
+  /**
+   * Simple decryption using basic crypto operations
+   * @private
+   */
+  async _decryptMessage(encryptedMessage, key) {
+    if (!encryptedMessage || !key) {
+      throw new Error('Encrypted message and key are required for decryption');
+    }
+    
+    try {
+      const crypto = require('crypto');
+      const algorithm = 'aes-256-cbc';
+      const keyHash = crypto.scryptSync(key, 'salt', 32);
+      
+      const parts = encryptedMessage.split(':');
+      if (parts.length !== 2) {
+        throw new Error('Invalid encrypted message format');
+      }
+      
+      const iv = Buffer.from(parts[0], 'hex');
+      const encrypted = parts[1];
+      
+      const decipher = crypto.createDecipheriv(algorithm, keyHash, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return decrypted;
+    } catch (error) {
+      throw new Error(`Decryption failed: ${error.message}`);
+    }
   }
 }
 
@@ -238,13 +409,19 @@ async function main() {
   const creditAmount = ethers.parseEther("0.01");
   await client.depositCredit(receiverHash, creditAmount);
   
-  // Send a message
+  // Example 1: Send a message with IPFS CID (traditional way)
   const ipfsCid = "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"; // example CID
   await client.sendMessage(receiverHash, ipfsCid);
   
-  // Get messages
-  const messages = await client.getMessages(receiverHash);
-  console.log("Messages:", messages);
+  // Example 2: Send a message with automatic IPFS integration (new way)
+  const messageContent = "Hello! This message will be encrypted and stored on IPFS.";
+  const encryptionKey = "my-secret-encryption-key";
+  const result = await client.sendMessageWithIPFS(receiverHash, messageContent, encryptionKey);
+  console.log("IPFS Integration Result:", result);
+  
+  // Get messages with IPFS content retrieval
+  const messages = await client.getMessagesWithIPFS(receiverHash, encryptionKey);
+  console.log("Messages with IPFS content:", messages);
   
   // Check stats again
   await client.getStats();

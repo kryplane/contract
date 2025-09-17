@@ -171,6 +171,49 @@ const totalUsers = await factory.getTotalUsers();
 await factory.addShard();
 ```
 
+### 4. IPFS Integration
+
+ShadowChat integrates with IPFS for off-chain encrypted message storage:
+
+```javascript
+// Initialize client with IPFS support
+const client = new ShadowChatClient(factoryAddress, batchAddress, signer);
+await client.init();
+
+// Send message with automatic IPFS storage
+const result = await client.sendMessageWithIPFS(
+  receiverHash,
+  "Your secret message here",
+  "encryption-key"
+);
+
+console.log("IPFS CID:", result.ipfsCid);
+console.log("Transaction:", result.transactionHash);
+
+// Retrieve and decrypt messages from IPFS
+const messages = await client.getMessagesWithIPFS(
+  receiverHash,
+  "encryption-key"
+);
+
+messages.forEach(msg => {
+  console.log("Decrypted:", msg.decryptedContent);
+  console.log("From IPFS:", msg.isFromIPFS);
+});
+```
+
+**IPFS Features:**
+- ✅ Automatic encryption and storage on IPFS
+- ✅ Support for Pinata cloud service and local IPFS nodes  
+- ✅ Seamless retrieval and decryption
+- ✅ Backward compatibility with on-chain storage
+- ✅ Reduces blockchain storage costs
+
+**Demo:**
+```bash
+npm run demo:ipfs  # Run IPFS integration demo
+```
+
 ## 📊 Features & Security
 
 ### 🔐 Privacy Features
@@ -522,6 +565,8 @@ ShadowChat enables anonymous messaging on-chain using:
 - **Security**: End-to-end encryption with sender verification
 - **Anti-spam**: Credit requirements prevent abuse
 - **Decentralized**: No centralized intermediaries
+- **IPFS Integration**: Off-chain encrypted message storage via IPFS
+- **Pinata Support**: Reliable IPFS hosting with Pinata cloud service
 
 ## Installation
 
@@ -690,9 +735,22 @@ event CreditWithdrawn(bytes32 indexed receiverHash, address withdrawer, uint256 
 
 Frontend should:
 1. Monitor events for relevant receiver hashes
-2. Download and decrypt IPFS content
+2. Download and decrypt IPFS content using the IPFSClient
 3. Verify sender signatures
 4. Update local database
+
+**IPFS Integration for Frontend:**
+```javascript
+// Initialize IPFS client
+const ipfs = new IPFSClient({
+  pinataApiKey: process.env.PINATA_API_KEY,
+  pinataSecretKey: process.env.PINATA_SECRET_KEY
+});
+
+// Retrieve message content from IPFS CID
+const messageData = await ipfs.retrieveMessage(cid);
+const decryptedContent = decrypt(messageData.content, key);
+```
 
 ## Contributing
 
