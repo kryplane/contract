@@ -7,6 +7,7 @@ import CreditManager from './components/CreditManager.jsx';
 import MessageCenter from './components/MessageCenter.jsx';
 import ChatMessageCenter from './components/ChatMessageCenter.jsx';
 import Analytics from './components/Analytics.jsx';
+import NotificationCenter from './components/NotificationCenter.jsx';
 import PrivacyOnboarding from './components/PrivacyOnboarding.jsx';
 import PrivacyStatusIndicator from './components/PrivacyStatusIndicator.jsx';
 
@@ -32,7 +33,8 @@ function App() {
   const tabs = [
     { id: 'identity', label: '🔑 Identity', component: IdentityGenerator },
     { id: 'credits', label: '💰 Credits', component: CreditManager },
-    { id: 'messages', label: '💬 Messages', component: ChatMessageCenter },
+    { id: 'messages', label: '💬 Messages', component: MessageCenter },
+    { id: 'notifications', label: '🔔 Notifications', component: NotificationCenter },
     { id: 'analytics', label: '📊 Analytics', component: Analytics }
   ];
 
